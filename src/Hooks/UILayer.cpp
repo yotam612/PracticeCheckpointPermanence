@@ -5,6 +5,10 @@
 #include <geode.custom-keybinds/include/Keybinds.hpp>
 #endif
 
+namespace {
+constexpr float kCheckpointButtonCooldown = 0.25f;
+}
+
 $execute {
 	Mod* mod = Mod::get();
 
@@ -261,7 +265,20 @@ createCheckpointCreateButton(CCNode* sibling, ModPlayLayer* playLayer) {
 	if (playLayer != nullptr) {
 		CCMenuItemSpriteExtra* trueButton = CCMenuItemExt::createSpriteExtra(
 			sprite, [playLayer](CCObject* sender) {
+				auto* button = static_cast<CCMenuItemSpriteExtra*>(sender);
+				if (!button->isEnabled())
+					return;
+				button->setEnabled(false);
 				playLayer->markPersistentCheckpoint();
+				button->runAction(CCSequence::create(
+					CCDelayTime::create(kCheckpointButtonCooldown),
+					CCCallFuncN::create([](CCNode* node) {
+						auto* menuItem =
+							static_cast<CCMenuItemSpriteExtra*>(node);
+						menuItem->setEnabled(true);
+					}),
+					nullptr
+				));
 			}
 		);
 		trueButton->m_scaleMultiplier = 1.1;
@@ -293,7 +310,20 @@ createCheckpointRemoveButton(CCNode* sibling, ModPlayLayer* playLayer) {
 	if (playLayer != nullptr) {
 		CCMenuItemSpriteExtra* trueButton = CCMenuItemExt::createSpriteExtra(
 			sprite, [playLayer](CCObject* sender) {
+				auto* button = static_cast<CCMenuItemSpriteExtra*>(sender);
+				if (!button->isEnabled())
+					return;
+				button->setEnabled(false);
 				playLayer->removeCurrentPersistentCheckpoint();
+				button->runAction(CCSequence::create(
+					CCDelayTime::create(kCheckpointButtonCooldown),
+					CCCallFuncN::create([](CCNode* node) {
+						auto* menuItem =
+							static_cast<CCMenuItemSpriteExtra*>(node);
+						menuItem->setEnabled(true);
+					}),
+					nullptr
+				));
 			}
 		);
 		trueButton->m_scaleMultiplier = 1.1;
