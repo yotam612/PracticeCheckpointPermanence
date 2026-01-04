@@ -65,13 +65,29 @@ void ModPlayLayer::markPersistentCheckpoint() {
 		return;
 	}
 
+	PersistentCheckpoint* previousActiveCheckpoint = nullptr;
+	if (m_fields->m_activeCheckpoint > 0 &&
+		m_fields->m_activeCheckpoint <=
+			m_fields->m_persistentCheckpointArray->count()) {
+		previousActiveCheckpoint = reinterpret_cast<PersistentCheckpoint*>(
+			m_fields->m_persistentCheckpointArray->objectAtIndex(
+				m_fields->m_activeCheckpoint - 1
+			)
+		);
+	}
+
 	PersistentCheckpoint* checkpoint =
 		PersistentCheckpoint::createFromCheckpoint(
 			createCheckpoint(), m_timePlayed, getCurrentPercent(),
 			m_effectManager->m_persistentItemCountMap,
 			m_effectManager->m_persistentTimerItemSet
 		);
-	m_fields->m_ghostActiveCheckpoint = storePersistentCheckpoint(checkpoint) + 1;
+	unsigned int storedIndex = storePersistentCheckpoint(checkpoint);
+	m_fields->m_ghostActiveCheckpoint = 0;
+	if (previousActiveCheckpoint != nullptr)
+		previousActiveCheckpoint->toggleActive(false);
+	checkpoint->toggleActive(true);
+	m_fields->m_activeCheckpoint = storedIndex + 1;
 	serializeCheckpoints();
 
 	if (m_fields->m_persistentCheckpointArray->count() == 1)
