@@ -143,8 +143,20 @@ ModPlayLayer::verifySaveStream(persistenceAPI::Stream& stream) {
 	if (savedPlatform != PLATFORM)
 		return LoadError::OtherPlatform;
 
-	if (isEditorLevel && !m_fields->m_levelStringHash.has_value())
-		m_fields->m_levelStringHash = c_stringHasher(m_level->m_levelString);
+	if (!isEditorLevel) {
+		if (levelVersion != m_level->m_levelVersion)
+			return LoadError::LevelVersionMismatch;
+	} else {
+		if (!m_fields->m_levelStringHash.has_value())
+			m_fields->m_levelStringHash = c_stringHasher(m_level->m_levelString);
+		if (levelStringHash != m_fields->m_levelStringHash.value()) {
+			// log::debug(
+			// 	"Bad Level Hash: {} != {}", levelStringHash,
+			// 	m_fields->m_levelStringHash.value()
+			// );
+			return LoadError::LevelVersionMismatch;
+		}
+	}
 
 	return saveVersion;
 }
